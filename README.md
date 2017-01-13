@@ -6,6 +6,7 @@ This code relies on swizzling the -dealloc method on NSObject. Only use it durin
 
 ## How to use
 Add all the .m and .h files to your project
+
 You will get an assert if an object gets dealloc'd without removing itself as an observer from NSNotificationCenter
 
 ## Test it out
