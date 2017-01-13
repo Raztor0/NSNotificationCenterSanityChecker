@@ -1,5 +1,5 @@
 # NSNotificationCenterSanityChecker
-Lets you know when an object has been dealloc'd without calling -removeObserver:
+Lets you know when an NSObject has been dealloc'd without calling -removeObserver:
 
 ## Do not use this in any production application
 This code relies on swizzling the -dealloc method on NSObject. Only use it during development.
