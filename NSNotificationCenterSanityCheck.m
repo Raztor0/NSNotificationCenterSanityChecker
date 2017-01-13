@@ -8,9 +8,16 @@
 
 #import "TargetConditionals.h"
 #if TARGET_IPHONE_SIMULATOR || TARGET_OS_SIMULATOR
-
-#import "NSNotificationCenterSanityCheck.h"
 #import "JRSwizzle.h"
+
+@interface NSNotificationCenterSanityCheck : NSObject
+
++ (void)addObserver:(void * _Nonnull * _Nonnull)observer forName:(NSString * _Nonnull)name;
++ (void)removeObserver:(void * _Nonnull * _Nonnull)observer forName:(NSString * _Nullable)name;
+
++ (void)objectHasBeenDeallocd:(void * _Nonnull * _Nonnull)object;
+
+@end
 
 @implementation NSNotificationCenter (SanityCheck)
 
