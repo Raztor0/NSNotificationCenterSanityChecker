@@ -16,8 +16,10 @@
 - (void)sanityCheck_addObserver:(id)observer selector:(SEL)aSelector name:(nullable NSNotificationName)aName object:(nullable id)anObject {
     [self sanityCheck_addObserver:observer selector:aSelector name:aName object:anObject];
     
-    void *obs = (__bridge void *)observer;
-    [NSNotificationCenterSanityCheck addObserver:&obs forName:aName];
+    if(observer) {
+        void *obs = (__bridge void *)observer;
+        [NSNotificationCenterSanityCheck addObserver:&obs forName:aName];
+    }
 }
 
 - (id <NSObject>)sanityCheck_addObserverForName:(nullable NSNotificationName)name object:(nullable id)obj queue:(nullable NSOperationQueue *)queue usingBlock:(void (^)(NSNotification *note))block {
@@ -30,15 +32,20 @@
 
 - (void)sanityCheck_removeObserver:(id)observer {
     [self sanityCheck_removeObserver:observer];
-    void *obs = (__bridge void *)observer;
-    [NSNotificationCenterSanityCheck removeObserver:&obs forName:nil];
+    
+    if(observer) {
+        void *obs = (__bridge void *)observer;
+        [NSNotificationCenterSanityCheck removeObserver:&obs forName:nil];
+    }
 }
 
 - (void)sanityCheck_removeObserver:(id)observer name:(nullable NSNotificationName)aName object:(nullable id)anObject {
     [self sanityCheck_removeObserver:observer name:aName object:anObject];
     
-    void *obs = (__bridge void *)observer;
-    [NSNotificationCenterSanityCheck removeObserver:&obs forName:aName];
+    if(observer) {
+        void *obs = (__bridge void *)observer;
+        [NSNotificationCenterSanityCheck removeObserver:&obs forName:aName];
+    }
 }
 
 + (void)load {
