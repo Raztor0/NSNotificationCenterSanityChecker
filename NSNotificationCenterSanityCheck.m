@@ -1,11 +1,3 @@
-//
-//  NSNotificationCenterSanityCheck.m
-//  tinder
-//
-//  Created by Razvan Bangu on 2017-01-10.
-//  Copyright © 2017 Razio. All rights reserved.
-//
-
 #import "TargetConditionals.h"
 #if TARGET_IPHONE_SIMULATOR || TARGET_OS_SIMULATOR
 #import "JRSwizzle.h"
