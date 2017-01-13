@@ -52,9 +52,11 @@
     
     error = nil;
     [NSNotificationCenter jr_swizzleMethod:@selector(addObserverForName:object:queue:usingBlock:) withMethod:@selector(sanityCheck_addObserverForName:object:queue:usingBlock:) error:&error];
-
+    
     if (error) {
         NSLog(@"An error ocurred while initializing %@: %@", NSStringFromClass(self), error);
+        NSLog(@"Attempting to reverse previous swizzle");
+        [NSNotificationCenter jr_swizzleMethod:@selector(addObserver:selector:name:object:) withMethod:@selector(sanityCheck_addObserver:selector:name:object:) error:nil];
         return;
     }
     
@@ -63,6 +65,9 @@
     
     if (error) {
         NSLog(@"An error ocurred while initializing %@: %@", NSStringFromClass(self), error);
+        NSLog(@"Attempting to reverse previous swizzles");
+        [NSNotificationCenter jr_swizzleMethod:@selector(addObserver:selector:name:object:) withMethod:@selector(sanityCheck_addObserver:selector:name:object:) error:nil];
+        [NSNotificationCenter jr_swizzleMethod:@selector(addObserverForName:object:queue:usingBlock:) withMethod:@selector(sanityCheck_addObserverForName:object:queue:usingBlock:) error:nil];
         return;
     }
     
@@ -71,6 +76,10 @@
     
     if (error) {
         NSLog(@"An error ocurred while initializing %@: %@", NSStringFromClass(self), error);
+        NSLog(@"Attempting to reverse previous swizzles");
+        [NSNotificationCenter jr_swizzleMethod:@selector(addObserver:selector:name:object:) withMethod:@selector(sanityCheck_addObserver:selector:name:object:) error:nil];
+        [NSNotificationCenter jr_swizzleMethod:@selector(addObserverForName:object:queue:usingBlock:) withMethod:@selector(sanityCheck_addObserverForName:object:queue:usingBlock:) error:nil];
+        [NSNotificationCenter jr_swizzleMethod:@selector(removeObserver:) withMethod:@selector(sanityCheck_removeObserver:) error:nil];
         return;
     }
 }
@@ -99,14 +108,19 @@
 @implementation NSNotificationCenterSanityCheck
 
 + (NSMutableDictionary <NSString *, NSHashTable *> *)registeredObservers {
-    static NSMutableDictionary <NSString *, NSHashTable *> *observerArray;
+    static NSMutableDictionary <NSString *, NSHashTable *> *observerDict;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
-        observerArray = [NSMutableDictionary dictionary];
+        observerDict = [NSMutableDictionary dictionary];
     });
-    return observerArray;
+    return observerDict;
 }
 
+/**
+ Keep track of the keys in the dictionary ourselves rather than calling [NSDictionary allKeys]
+ because that function call creates a new array which gets deallocated upon exiting +objectHasBeenDeallocd
+ which creates an infinite loop
+ */
 + (NSMutableSet <NSString *> *)keys {
     static NSMutableSet *mutableKeys;
     static dispatch_once_t onceToken;
@@ -118,7 +132,9 @@
 
 + (void)addObserver:(void * _Nonnull * _Nonnull)observer forName:(NSString * _Nonnull)name {
     NSAssert(name, @"+%s must be called with a non-nil name", __PRETTY_FUNCTION__);
+    NSAssert(observer, @"+%s must be called with a non-nil pointer", __PRETTY_FUNCTION__);
     NSAssert(*observer, @"+%s must be called with a non-nil observer pointer", __PRETTY_FUNCTION__);
+    
     @synchronized (self) {
         NSHashTable *hashTable;
         if (!(hashTable = [[self registeredObservers] objectForKey:name])) {
@@ -135,6 +151,7 @@
 }
 
 + (void)removeObserver:(void * _Nonnull * _Nonnull)observer forName:(NSString * _Nullable)name {
+    NSAssert(observer, @"+%s must be called with a non-nil pointer", __PRETTY_FUNCTION__);
     NSAssert(*observer, @"+%s must be called with a non-nil observer pointer", __PRETTY_FUNCTION__);
     
     @synchronized (self) {
@@ -156,10 +173,11 @@
 }
 
 + (void)objectHasBeenDeallocd:(void * _Nonnull * _Nonnull)object {
+    NSAssert(object, @"+%s must be called with a non-nil pointer", __PRETTY_FUNCTION__);
     NSAssert(*object, @"+%s must be called with a non-nil object pointer", __PRETTY_FUNCTION__);
     
-    @autoreleasepool {
-        @synchronized (self) {
+    @synchronized (self) {
+        @autoreleasepool {
             for (NSString *key in [self keys]) {
                 NSHashTable *hashTable = [[self registeredObservers] objectForKey:key];
                 NSAssert(![hashTable containsObject:(__bridge id _Nullable)(*object)], @"%p dealloc'd without calling one of the -removeObserver methods on NSNotificationCenter", *object);
