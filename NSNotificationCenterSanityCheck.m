@@ -7,7 +7,7 @@
 + (void)addObserver:(void * _Nonnull * _Nonnull)observer forName:(NSString * _Nonnull)name;
 + (void)removeObserver:(void * _Nonnull * _Nonnull)observer forName:(NSString * _Nullable)name;
 
-+ (void)objectHasBeenDeallocd:(void * _Nonnull * _Nonnull)object;
++ (void)objectHasBeenDeallocd:(void * _Nonnull * _Nonnull)object withOldClassName:(NSString *)oldClassName;
 
 @end
 
@@ -90,8 +90,9 @@
 
 - (void)nsobjDealloc {
     void *oldSelf = (__bridge void *)self;
+    NSString *oldClassName = NSStringFromClass([self class]);
     [self nsobjDealloc];
-    [NSNotificationCenterSanityCheck objectHasBeenDeallocd:&oldSelf];
+    [NSNotificationCenterSanityCheck objectHasBeenDeallocd:&oldSelf withOldClassName:oldClassName];
 }
 
 + (void)load {
@@ -172,7 +173,7 @@
     }
 }
 
-+ (void)objectHasBeenDeallocd:(void * _Nonnull * _Nonnull)object {
++ (void)objectHasBeenDeallocd:(void * _Nonnull * _Nonnull)object withOldClassName:(NSString *)oldClassname {
     NSAssert(object, @"+%s must be called with a non-nil pointer", __PRETTY_FUNCTION__);
     NSAssert(*object, @"+%s must be called with a non-nil object pointer", __PRETTY_FUNCTION__);
     
@@ -180,7 +181,9 @@
         @autoreleasepool {
             for (NSString *key in [self keys]) {
                 NSHashTable *hashTable = [[self registeredObservers] objectForKey:key];
-                NSAssert(![hashTable containsObject:(__bridge id _Nullable)(*object)], @"%p dealloc'd without calling one of the -removeObserver methods on NSNotificationCenter", *object);
+                if ([hashTable containsObject:(__bridge id _Nullable)(*object)]) {
+                    NSLog(@"%p [%@] was still observing notifications for: %@ when it was dealloc'd", *object, oldClassname, key);
+                }
             }
         }
     }

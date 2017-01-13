@@ -11,7 +11,7 @@ If you want to use the code on an actual device, remove the #if and #endif from 
 ## How to use
 Add all the .m and .h files to your project
 
-You will get an assert if an object gets dealloc'd without removing itself as an observer from NSNotificationCenter
+You will get a log message if an object gets dealloc'd without removing itself as an observer from NSNotificationCenter. If you want to take a closer look at what was happening at the time of the dealloc, put a breakpoint on the NSLog line in the function +objectHasBeenDeallocd:withOldClassName:
 
 ## Test it out
 Put this line anywhere in your code:
