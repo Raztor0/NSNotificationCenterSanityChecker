@@ -183,6 +183,7 @@
                 NSHashTable *hashTable = [[self registeredObservers] objectForKey:key];
                 if ([hashTable containsObject:(__bridge id _Nullable)(*object)]) {
                     NSLog(@"%p [%@] was still observing notifications for: %@ when it was dealloc'd", *object, oldClassname, key);
+                    [hashTable removeObject:(__bridge id _Nullable)(*object)];
                 }
             }
         }
