@@ -16,6 +16,8 @@
 - (void)sanityCheck_addObserver:(id)observer selector:(SEL)aSelector name:(nullable NSNotificationName)aName object:(nullable id)anObject {
     [self sanityCheck_addObserver:observer selector:aSelector name:aName object:anObject];
     
+    NSAssert([observer respondsToSelector:aSelector], @"%@ Added itself as an observer using a selector which it does not respond to: %@", observer, NSStringFromSelector(aSelector));
+    
     if(observer) {
         void *obs = (__bridge void *)observer;
         [NSNotificationCenterSanityCheck addObserver:&obs forName:aName];
@@ -189,12 +191,16 @@
             for (NSString *key in [self keys]) {
                 NSHashTable *hashTable = [[self registeredObservers] objectForKey:key];
                 if ([hashTable containsObject:(__bridge id _Nullable)(*object)]) {
-                    NSLog(@"%p [%@] was still observing notifications for: %@ when it was dealloc'd", *object, oldClassname, key);
+                    deallocdObjectStillObservingNotifications(object, oldClassname, key);
                     [hashTable removeObject:(__bridge id _Nullable)(*object)];
                 }
             }
         }
     }
+}
+
+void deallocdObjectStillObservingNotifications(void **object, NSString *oldClassname, NSString *key) {
+    NSLog(@"%p [%@] was still observing notifications for: %@ when it was dealloc'd", *object, oldClassname, key);
 }
 
 @end
